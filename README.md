@@ -1,5 +1,5 @@
 
-# Anime Info Fetcher
+# Ani Shedule
 
 This script fetches and displays information about anime titles from [animeschedule.net](https://animeschedule.net). It supports searching by anime name or URL, validates and stores URLs, extracts anime details, and allows concurrent fetching using multiple threads. It includes a command-line interface for user interaction.
 
