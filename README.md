@@ -11,6 +11,13 @@ This script fetches and displays information about anime titles from [animesched
 - Fetch information concurrently using multiple threads.
 - Command-line interface for easy interaction.
 
+```markdown
+## Warning:
+
+This program is still under development
+
+```
+
 ## Usage
 
 1. **Add Anime by Search Term:**
