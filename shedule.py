@@ -288,6 +288,7 @@ def main():
 
     if args.delete:
        process_anime_links(anime_file)
+
        sys.exit(0)
 
     if args.airing:
