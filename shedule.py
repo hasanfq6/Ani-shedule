@@ -25,7 +25,7 @@ if not anime_file.exists():
 
 
 ge="\033[32m"
-re="\033[0m"
+res="\033[0m"
 
 def die(message):
 
@@ -329,7 +329,7 @@ def main():
                 file.write(url + "\n")
             print(message)
             for key, value in fetch_anime_info(url).items():
-                print(f"{key}: {ge}{value}{re}")
+                print(f"{key}: {ge}{value}{res}")
             sys.exit(0)
         else:
             print(message)
@@ -370,7 +370,7 @@ def main():
 
     current_day = datetime.datetime.now().strftime("%A")
     if args.today:
-        print(f"Animes Airing on {ge}{current_day}{re}")
+        print(f"Animes Airing on {ge}{current_day}{res}")
 
     for anime_info in anime_info_list:
         airing_day_str = anime_info["Airing Day"]
@@ -384,10 +384,10 @@ def main():
 
         for key, value in anime_info.items():
             if key != "Airing Day":
-                print(f"{key}: {ge}{value}{re}")
+                print(f"{key}: {ge}{value}{res}")
         print("" + "-"*40 + "")
 
-    print(f"total time: {ge}{fn}{re}")
+    print(f"total time: {ge}{fn}{res}")
 
 if __name__ == "__main__":
     main()
