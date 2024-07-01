@@ -5,7 +5,6 @@ import requests, re
 from lxml import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from colorama import Fore, Style, init
 from argparse import ArgumentParser
 import datetime, sys
 from prompt_toolkit import prompt
