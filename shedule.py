@@ -20,6 +20,10 @@ home_dir = Path.home()
 
 anime_file = home_dir / '.anime_links'
 
+if not anime_file.exists():
+    anime_file.touch()
+
+
 ge="\033[32m"
 re="\033[0m"
 
@@ -40,6 +44,19 @@ class NumberValidator(Validator):
         text = document.text
         if not text.isdigit():
             raise ValidationError(message="Only numbers are allowed.", cursor_position=len(text))
+
+def is_valid_link(line):
+    return re.match(r'^(http://|https://)', line)
+
+with anime_file.open('r') as file:
+    lines = file.readlines()
+    invalid_lines = [line for line in lines if not is_valid_link(line.strip())]
+
+if invalid_lines:
+    die("In the file there is an invalid link, please remove it")
+    sys.exit(1)
+else:
+    pass
 
 def val(text):
     while True:
@@ -320,6 +337,13 @@ def main():
     
     with open(anime_file, "r") as file:
         urls = [line.strip() for line in file.readlines()]
+
+    with anime_file.open('r') as file:
+       line = file.readlines()
+
+    if not lines:
+       die("Please add Anime: use ani-shedule -a | ani-shedule --add")
+       sys.exit(1)
 
     st = time.time()
     success_count = 0
