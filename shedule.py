@@ -12,22 +12,27 @@ from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
+from pathlib import Path
 
-anime_file = "/data/data/com.termux/files/home/.anime_links"
+home_dir = Path.home()
 
-ge="[32m"
-re="[0m"
+anime_file = home_dir / '.anime_links'
+
+#anime_file = "/data/data/com.termux/files/home/.anime_links"
+
+ge="\033[32m"
+re="\033[0m"
 
 def die(message):
 
-    red = "[31m"
-    reset = "[0m"
+    red = "\033[31m"
+    reset = "\033[0m"
     print(f"[{red}warning{reset}] {message}")
 
 def info(message):
 
-    green = "[32m"
-    r = "[0m"
+    green = "\033[32m"
+    r = "\033[0m"
     print(f"[{green}INFO{r}] {message}")
 
 class NumberValidator(Validator):
@@ -61,7 +66,7 @@ lexer = SimpleLexer('class:input')
 
 def text_(text):
     try:
-       user_input = prompt('Enter the name of the anime: ', lexer=lexer, style=custom_style)
+       user_input = prompt(text, lexer=lexer, style=custom_style)
        return user_input
     except KeyboardInterrupt:
        die("User canceled the progress")
@@ -81,6 +86,7 @@ def extract_anime_info(page_content):
     subs_countdown = safe_extract('//div[@class="countdown-container"]//div[contains(@class, "countdown-text-subs")]/following-sibling::time[@class="countdown-time"]/text()')
     raw_countdown = safe_extract('//div[@class="countdown-container"]//div[contains(@class, "countdown-text-raw")]/following-sibling::time[@class="countdown-time"]/text()')
     airing_day = safe_extract('//div[@class="release-time-wrapper"]//h3[contains(text(), "Subs:")]/following-sibling::time[@id="release-time-subs"]/@datetime')
+    status = tree.xpath('//h3[text()="Status"]/following-sibling::div/text()')[0]
     
     return {
         "Main Title": main_title,
@@ -89,12 +95,16 @@ def extract_anime_info(page_content):
         "Subs Release Date": subs_release_date,
         "Subs Countdown": subs_countdown,
         "Raw Countdown": raw_countdown,
-        "Airing Day": airing_day
+        "Airing Day": airing_day,
+        "Status": status
     }
 
 def fetch_anime_info(url):
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+       response = requests.get(url)
+       response.raise_for_status()
+    except Exception as e:
+       pass
     return extract_anime_info(response.content)
 
 def check_url(url, anime_file):
@@ -115,18 +125,14 @@ def check_url(url, anime_file):
     return True, f"Url({url}) is added to the file.."
 
 def get_anime_data(url):
-    response_text = requests.get(url).text
+    response = requests.get(url,allow_redirects=True)
+    response_text = response.text
     tree = html.fromstring(response_text)
     anime_data = []
-    if "See Other" in response_text:
-       pattern = r'href="/shows/(.*?)"'
-       match = re.search(pattern, html_link)
-       title = match.group(1)
-       t_x = title.replace("-"," ")
-       anime_data.append({
-                "title": t_x,
-                "link": f"https://animeschedule.net/anime/{title}"
-            })
+
+    if len(response.history) > 0:
+         return False, response.url
+
     else:
      for anime_element in tree.xpath("//div[contains(@class, 'anime-tile')]"):
         title_element = anime_element.xpath(".//h2[@class='anime-tile-title']")
@@ -137,11 +143,14 @@ def get_anime_data(url):
                 "link": f"https://animeschedule.net/anime/{link_element[0]}"
             })
 
-    return anime_data
+    return True,anime_data
 
 def get_list(key):
     url = f"https://animeschedule.net/shows?q={key}"
-    anime_data = get_anime_data(url)
+    status, anime_data = get_anime_data(url)
+
+    if not status:
+         return True, anime_data
 
     if (not anime_data):
         return False, "No anime titles found on the webpage."
@@ -158,12 +167,100 @@ def get_list(key):
     else:
         return False, "Invalid selection. Please choose a number from the list."
 
+def get_color(success_count, total_anime):
+    red = max(0, 255 - int(255 * (success_count / total_anime)))
+    green = min(255, int(255 * (success_count / total_anime)))
+    return f'\033[38;2;{red};{green};0m'
+
+def process_anime_info_1(link):
+    link = link.strip()
+    status = fetch_anime_info(link)
+    if status:
+        title_1 = status.get("Main Title")
+        title_2 = status.get("English Title")
+        if status.get("Status") == "Finished":
+            return (f"{title_1} / {title_2}", link, "Finished")
+        elif status.get("Status") == "Ongoing":
+            return (None, link, "Ongoing")
+    return (None, link, "Unknown")
+
+def process_anime_links(file_path):
+    with open(file_path, 'r') as file:
+        links = file.readlines()
+
+    finished_anime = []
+    ongoing_anime = []
+    fetch_count = 0
+    total_anime = len(links)
+
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+     futures = {executor.submit(process_anime_info_1, link): link for link in links}
+     for future in as_completed(futures):
+        try:
+            title, link, status = future.result()
+            fetch_count += 1
+            color = get_color(fetch_count, total_anime)
+            print(f"Number of anime fetched: {color}{fetch_count}\033[0m", end="\r")
+
+            if status == "Finished":
+                finished_anime.append((title, link))
+            else:
+                ongoing_anime.append(link)
+        except Exception as e:
+            print(f"Error fetching data for {futures[future]}: {e}")
+
+    print()
+
+    if finished_anime:
+        print("The following anime are finished:")
+        for i, (title, link) in enumerate(finished_anime, start=1):
+            print(f"{i}. {title}")
+
+        user_input = text_("Do you want to delete all finished anime? (yes to delete all, no to specify exceptions, 0 to delete none): ")
+
+        if user_input.lower() == "yes":
+            exceptions = []
+        elif user_input == "0":
+            exceptions = list(range(1, len(finished_anime) + 1))
+        elif user_input == "no":
+            exceptions = text_("Enter the numbers of the anime you want to keep, separated by commas: ")
+            exceptions = list(map(int, exceptions.split(',')))
+        else:
+            die("Invalid Option selected")
+            sys.exit(1)
+
+        # Remove links from the file
+        links_to_keep = ongoing_anime + [link for i, (title, link) in enumerate(finished_anime, start=1) if i in exceptions]
+        deleted_count = len(links) - len(links_to_keep)
+
+        with open(file_path, 'w') as file:
+            for link in links_to_keep:
+                file.write(link + '\n')
+
+        # Print the number of deleted anime links
+        info(f"Number of anime links deleted: {deleted_count}")
+    else:
+        info("No finished anime found.")
+
+
+
 def main():
     parser = ArgumentParser(description="Fetch anime info from URLs")
     parser.add_argument("-t", "--today", action="store_true", help="Display the anime that is coming on the current day")
     parser.add_argument("-s", "--thread", type=int, default=10, help="Number of threads to use (default=10)")
     parser.add_argument("-a", "--add", nargs="?", const="", help="Add anime to the list by URL or search term")
+    parser.add_argument("-b", "--airing",action="store_true" , help="List the Upcoming Anime ")
+    parser.add_argument("-d", "--delete",action="store_true" , help="Delete the anime that is finished airing")
+
     args = parser.parse_args()
+
+    if args.delete:
+       process_anime_links(anime_file)
+       sys.exit(0)
+
+    if args.airing:
+        print("it is under progress")
 
     if args.add is not None:
         if args.add == "":
@@ -180,7 +277,7 @@ def main():
         result, message = check_url(url, anime_file)
         if result:
             with open(anime_file, 'a') as file:
-                file.write(url + "")
+                file.write(url + "\n")
             print(message)
             for key, value in fetch_anime_info(url).items():
                 print(f"{key}: {ge}{value}{re}")
@@ -193,6 +290,27 @@ def main():
         urls = [line.strip() for line in file.readlines()]
 
     st = time.time()
+    success_count = 0
+    total_anime = len(urls)
+
+    with ThreadPoolExecutor(max_workers=args.thread) as executor:
+      anime_info_list = []
+      futures = {executor.submit(fetch_anime_info, url): url for url in urls}
+      for future in as_completed(futures):
+        try:
+            anime_info = future.result()
+            anime_info_list.append(anime_info)
+            success_count += 1
+        except Exception as e:
+            print(f"Error fetching data for {futures[future]}: {e}")
+
+        color = get_color(success_count, total_anime)
+        
+        print(f"Number of anime fetched: {color}{success_count}\033[0m", end="\r")
+    print()
+
+
+    """
     with tqdm(total=len(urls)) as pbar:
         anime_info_list = []
         with ThreadPoolExecutor(max_workers=args.thread) as executor:
@@ -205,6 +323,7 @@ def main():
                     print(f"Error fetching data for {futures[future]}: {e}")
                 finally:
                     pbar.update(1)
+    """
     ed = time.time()
     fn = ed - st
 
