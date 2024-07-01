@@ -14,11 +14,11 @@ from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
 
+version = 1.0.2
+
 home_dir = Path.home()
 
 anime_file = home_dir / '.anime_links'
-
-#anime_file = "/data/data/com.termux/files/home/.anime_links"
 
 ge="\033[32m"
 re="\033[0m"
@@ -53,15 +53,11 @@ def val(text):
             sys.exit(1)
 
 
-# Initialize colorama
-init(autoreset=True)
-
 custom_style = Style.from_dict({
-    'accepted': 'ansiyellow', # Accepted input color is yellow
+    'accepted': 'ansiyellow',
     'input': 'ansiblue'
 })
 
-# Define the lexer to apply the style to user input
 lexer = SimpleLexer('class:input')
 
 def text_(text):
@@ -71,6 +67,36 @@ def text_(text):
     except KeyboardInterrupt:
        die("User canceled the progress")
        sys.exit(1)
+
+def get_latest_version():
+    url = f"https://raw.githubusercontent.com/Kamanati/Ani-shedule/main/shedule.py"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    else:
+        die(f"Failed to fetch the latest version from GitHub: {response.status_code}")
+        return None
+
+def get_current_version():
+    with open(__file__, 'r') as file:
+        return file.read()
+
+def self_update():
+    latest_version = get_latest_version()
+    current_version = get_current_version()
+
+    if latest_version and latest_version != current_version:
+        backup_path = __file__ + ".bak"
+        with open(backup_path, 'w') as backup_file:
+            backup_file.write(current_version)
+        
+        with open(__file__, 'w') as script_file:
+            script_file.write(latest_version)
+        
+        info("Script has been updated to the latest version. Please restart the script.")
+        sys.exit(0)
+    else:
+        info("Script is already up-to-date.")
 
 def extract_anime_info(page_content):
     tree = html.fromstring(page_content)
