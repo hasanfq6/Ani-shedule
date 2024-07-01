@@ -14,7 +14,7 @@ from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
 
-version = 1.0.2
+version = "1.0.2"
 
 home_dir = Path.home()
 
@@ -93,7 +93,7 @@ def self_update():
         with open(__file__, 'w') as script_file:
             script_file.write(latest_version)
         
-        info("Script has been updated to the latest version. Please restart the script.")
+        info(f"Script has been updated to the latest version({version}). Please restart the script.")
         sys.exit(0)
     else:
         info("Script is already up-to-date.")
@@ -278,8 +278,12 @@ def main():
     parser.add_argument("-a", "--add", nargs="?", const="", help="Add anime to the list by URL or search term")
     parser.add_argument("-b", "--airing",action="store_true" , help="List the Upcoming Anime ")
     parser.add_argument("-d", "--delete",action="store_true" , help="Delete the anime that is finished airing")
+    parser.add_argument("-u", "--update",action="store_true" , help="Update the script to latest version")
 
     args = parser.parse_args()
+
+    if args.update:
+       self_update()
 
     if args.delete:
        process_anime_links(anime_file)
@@ -335,21 +339,6 @@ def main():
         print(f"Number of anime fetched: {color}{success_count}\033[0m", end="\r")
     print()
 
-
-    """
-    with tqdm(total=len(urls)) as pbar:
-        anime_info_list = []
-        with ThreadPoolExecutor(max_workers=args.thread) as executor:
-            futures = {executor.submit(fetch_anime_info, url): url for url in urls}
-            for future in as_completed(futures):
-                try:
-                    anime_info = future.result()
-                    anime_info_list.append(anime_info)
-                except Exception as e:
-                    print(f"Error fetching data for {futures[future]}: {e}")
-                finally:
-                    pbar.update(1)
-    """
     ed = time.time()
     fn = ed - st
 
