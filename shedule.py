@@ -284,6 +284,7 @@ def main():
 
     if args.update:
        self_update()
+       sys.exit(0)
 
     if args.delete:
        process_anime_links(anime_file)
