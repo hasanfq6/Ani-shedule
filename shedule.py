@@ -366,7 +366,7 @@ def main():
 
     ed = time.time()
     fn = ed - st
-
+    flag = False
     current_day = datetime.datetime.now().strftime("%A")
     if args.today:
         print(f"Animes Airing on {ge}{current_day}{res}")
@@ -381,10 +381,19 @@ def main():
         if args.today and airing_day != current_day:
             continue
 
+        flag = True
+
         for key, value in anime_info.items():
             if key != "Airing Day":
                 print(f"{key}: {ge}{value}{res}")
         print("" + "-"*40 + "")
+
+    if not flag:
+       die("It seems like no anime airing today.")
+       info("if you sure the anime aires today then it may be the last episode")
+       info("Or it May be some error please check network connection Or")
+       info("Try reduce the thread by -b or --thread to 2-4, (default 10)")
+       sys.exit(1)
 
     print(f"total time: {ge}{fn}{res}")
 
