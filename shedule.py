@@ -15,8 +15,6 @@ from pathlib import Path
 
 version = "1.0.5"
 
-disc = "Fixed some bugs"
-
 home_dir = Path.home()
 
 anime_file = home_dir / '.anime_links'
@@ -111,7 +109,7 @@ def self_update():
         with open(__file__, 'w') as script_file:
             script_file.write(latest_version)
         
-        info(f"Script has been updated to the latest version({version}). Please restart the script.")
+        info(f"Script has been updated to the latest version. Please restart the script.")
         sys.exit(0)
     else:
         info("Script is already up-to-date.")
@@ -310,7 +308,8 @@ def main():
        sys.exit(0)
 
     if args.airing:
-        print("it is under progress")
+        info(f"It is under progress, it will available soon, if not try {ge}ani-shedule --update | -u{res}")
+        sys.exit(0)
 
     if args.add is not None:
         if args.add == "":
