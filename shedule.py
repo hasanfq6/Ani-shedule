@@ -13,7 +13,7 @@ from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
 
-version = "1.0.3"
+version = "1.0.4"
 
 home_dir = Path.home()
 
