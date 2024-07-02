@@ -128,7 +128,14 @@ def extract_anime_info(page_content):
     subs_countdown = safe_extract('//div[@class="countdown-container"]//div[contains(@class, "countdown-text-subs")]/following-sibling::time[@class="countdown-time"]/text()')
     raw_countdown = safe_extract('//div[@class="countdown-container"]//div[contains(@class, "countdown-text-raw")]/following-sibling::time[@class="countdown-time"]/text()')
     airing_day = safe_extract('//div[@class="release-time-wrapper"]//h3[contains(text(), "Subs:")]/following-sibling::time[@id="release-time-subs"]/@datetime')
-    status = tree.xpath('//h3[text()="Status"]/following-sibling::div/text()')[0]
+    try:
+      status = tree.xpath('//h3[text()="Status"]/following-sibling::div/text()')[0]
+    except IndexError:
+      status = None
+    try:
+      total_ep = tree.xpath('//h3[text()="Episodes"]/following-sibling::div/text()')[0]
+    except IndexError:
+      total_ep = None
     
     return {
         "Main Title": main_title,
@@ -136,7 +143,7 @@ def extract_anime_info(page_content):
         "Episode Number": episode_number,
         "Subs Release Date": subs_release_date,
         "Subs Countdown": subs_countdown,
-        "Raw Countdown": raw_countdown,
+        "Total episode": total_ep,
         "Airing Day": airing_day,
         "Status": status
     }
