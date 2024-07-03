@@ -1,5 +1,4 @@
 #!/data/data/com.termux/files/usr/bin/python
-
 import time,sys
 import requests, re
 from lxml import html
@@ -12,28 +11,24 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
+from tabulate import tabulate
 
-version = "1.0.5"
-
+version = "1.0.6"
 home_dir = Path.home()
-
 anime_file = home_dir / '.anime_links'
 
 if not anime_file.exists():
     anime_file.touch()
 
-
 ge="\033[32m"
 res="\033[0m"
 
 def die(message):
-
     red = "\033[31m"
     reset = "\033[0m"
     print(f"[{red}warning{reset}] {message}")
 
 def info(message):
-
     green = "\033[32m"
     r = "\033[0m"
     print(f"[{green}INFO{r}] {message}")
@@ -60,7 +55,7 @@ else:
 def val(text):
     while True:
         try:
-            user_input = prompt('Enter a number: ', validator=NumberValidator())
+            user_input = prompt(text, validator=NumberValidator())
             return int(user_input)
         except ValidationError as ve:
             print(f'{ve}')
@@ -112,7 +107,7 @@ def self_update():
         info(f"Script has been updated to the latest version. Please restart the script.")
         sys.exit(0)
     else:
-        info("Script is already up-to-date.")
+        info("Script is already up-to-date :)")
 
 def extract_anime_info(page_content):
     tree = html.fromstring(page_content)
@@ -279,7 +274,6 @@ def process_anime_links(file_path):
             die("Invalid Option selected")
             sys.exit(1)
 
-        # Remove links from the file
         links_to_keep = ongoing_anime + [link for i, (title, link) in enumerate(finished_anime, start=1) if i in exceptions]
         deleted_count = len(links) - len(links_to_keep)
 
@@ -287,11 +281,45 @@ def process_anime_links(file_path):
             for link in links_to_keep:
                 file.write(link + '\n')
 
-        # Print the number of deleted anime links
         info(f"Number of anime links deleted: {deleted_count}")
     else:
         info("No finished anime found.")
 
+def display_anime_info(anime):
+    for key, value in anime.items():
+        print(f"{key}: {ge}{value}{res}")
+    sys.exit(0)
+
+def specific(thread):
+   with open(anime_file, "r") as file:
+        urls = [line.strip() for line in file.readlines()]
+   success_count = 0
+   total_anime = len(urls)
+   with ThreadPoolExecutor(max_workers=thread) as executor:
+      anime_info_list = []
+      futures = {executor.submit(fetch_anime_info, url): url for url in urls}
+      for future in as_completed(futures):
+        try:
+            anime_info = future.result()
+            anime_info_list.append(anime_info)
+            success_count += 1
+        except Exception as e:
+            print(f"Error fetching data for {futures[future]}: {e}")
+
+        color = get_color(success_count, total_anime)
+
+        print(f"Number of anime fetched: {color}{success_count}\033[0m", end="\r")
+
+   for idx, anime in enumerate(anime_info_list):
+        print(f"{ge}{idx + 1}{res}. {anime['Main Title']} / {anime['English Title']}")
+
+    
+   selection = val("Enter the index of the anime you want to view: ") - 1
+   if 0 <= selection < len(anime_info_list):
+            selected_anime = anime_info_list[selection]
+            display_anime_info(selected_anime)
+   else:
+            die("Invalid index.")
 
 
 def main():
@@ -302,6 +330,7 @@ def main():
     parser.add_argument("-b", "--airing",action="store_true" , help="List the Upcoming Anime ")
     parser.add_argument("-d", "--delete",action="store_true" , help="Delete the anime that is finished airing")
     parser.add_argument("-u", "--update",action="store_true" , help="Update the script to latest version")
+    parser.add_argument("-S", "--specific",action="store_true" , help="Select specific anime to see the details")
 
     args = parser.parse_args()
 
@@ -311,7 +340,10 @@ def main():
 
     if args.delete:
        process_anime_links(anime_file)
+       sys.exit(0)
 
+    if args.specific:
+       specific(args.thread)
        sys.exit(0)
 
     if args.airing:
@@ -339,7 +371,7 @@ def main():
                 print(f"{key}: {ge}{value}{res}")
             sys.exit(0)
         else:
-            print(message)
+            info(message)
             sys.exit(1)
     
     with open(anime_file, "r") as file:
