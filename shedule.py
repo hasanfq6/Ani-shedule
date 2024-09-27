@@ -326,7 +326,7 @@ def main():
     parser = ArgumentParser(description="Fetch anime info from URLs")
     parser.add_argument("-t", "--today", action="store_true", help="Display the anime that is coming on the current day")
     parser.add_argument("-s", "--thread", type=int, default=10, help="Number of threads to use (default=10)")
-    parser.add_argument("-a", "--add", nargs="?", const="", help="Add anime to the list by URL or search term")
+    parser.add_argument("-a", "--add", nargs="+", help="Add anime to the list by URL or search term")
     parser.add_argument("-b", "--airing",action="store_true" , help="List the Upcoming Anime ")
     parser.add_argument("-d", "--delete",action="store_true" , help="Delete the anime that is finished airing")
     parser.add_argument("-u", "--update",action="store_true" , help="Update the script to latest version")
@@ -351,6 +351,7 @@ def main():
         sys.exit(0)
 
     if args.add is not None:
+        item = " ".join(args.add)
         if args.add == "":
             search = text_("Enter Anime you want to search: ")
             result, message = get_list(search)
@@ -359,8 +360,15 @@ def main():
             else:
                 print(message)
                 sys.exit(1)
+        elif "http" in item:
+            url = " ".join(args.add)
         else:
-            url = args.add
+            result, message = get_list(" ".join(args.add))
+            if result:
+                url = message
+            else:
+                print(message)
+                sys.exit(1)
 
         result, message = check_url(url, anime_file)
         if result:
