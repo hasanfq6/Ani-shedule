@@ -14,7 +14,7 @@ from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
 from tabulate import tabulate
 
-version = "1.0.6"
+version = "1.0.7"
 home_dir = Path.home()
 anime_file = home_dir / '.anime_links'
 
