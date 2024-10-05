@@ -1,11 +1,9 @@
-from ani_mation import loading,CustomLoading
+from enimation import loading
+from enimation.motions import dots_loading
+import time
 
-loader = CustomLoading()
-
-def get():
-    import time
+@loading(custom=dots_loading)
+def long_task():
     time.sleep(5)
-    return "Succes"
-loader.start()
-x = get()
-loader.stop()
+
+long_task()  # The dots_loading animation will play during the task

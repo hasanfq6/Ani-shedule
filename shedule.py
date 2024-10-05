@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/python
+import argcomplete
 import time,sys
 import requests, re
 from lxml import html
