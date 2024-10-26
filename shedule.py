@@ -13,6 +13,9 @@ from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.validation import Validator, ValidationError
 from pathlib import Path
 from tabulate import tabulate
+import aiohttp
+import asyncio
+from tqdm.asyncio import tqdm
 
 version = "1.0.7"
 home_dir = Path.home()
@@ -143,6 +146,16 @@ def extract_anime_info(page_content):
         "Airing Day": airing_day,
         "Status": status
     }
+
+async def async_fetch_anime_info(url):
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                return extract_anime_info(await response.text())
+    except Exception as e:
+        print(f"Error fetching anime info from {url}: {e}")
+        return None
 
 def fetch_anime_info(url):
     try:
@@ -323,7 +336,7 @@ def specific(thread):
             die("Invalid index.")
 
 
-def main():
+async def main():
     parser = ArgumentParser(description="Fetch anime info from URLs")
     parser.add_argument("-t", "--today", action="store_true", help="Display the anime that is coming on the current day")
     parser.add_argument("-s", "--thread", type=int, default=10, help="Number of threads to use (default=10)")
@@ -397,6 +410,24 @@ def main():
     success_count = 0
     total_anime = len(urls)
 
+    anime_info_list = []
+
+    tasks = [async_fetch_anime_info(url) for url in urls]
+    
+    # Use tqdm to display progress for asynchronous tasks
+    async for task in tqdm(asyncio.as_completed(tasks), total=total_anime, desc="Fetching anime info",leave=False):
+        try:
+            anime_info = await task
+            if anime_info:
+                anime_info_list.append(anime_info)
+                success_count += 1
+        except Exception as e:
+            print(f"Error fetching data: {e}")
+
+    print(f"\nTotal anime fetched: {success_count}/{total_anime}")
+
+    """
+
     with ThreadPoolExecutor(max_workers=args.thread) as executor:
       anime_info_list = []
       futures = {executor.submit(fetch_anime_info, url): url for url in urls}
@@ -411,6 +442,8 @@ def main():
         color = get_color(success_count, total_anime)
         
         print(f"Number of anime fetched: {color}{success_count}\033[0m", end="\r")
+    """
+
     print()
 
     ed = time.time()
@@ -446,5 +479,14 @@ def main():
 
     print(f"total time: {ge}{fn}{res}")
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    asyncio.run(main())
+
+import asyncio
+
+def run_async(coroutine):
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(coroutine)
+
+# Usage
+result = run_async(main())
