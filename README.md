@@ -123,6 +123,16 @@ pip install ani-shedule
    python script.py -a
    ```
 
+
+<p align=left>
+Total Views<br/>
+  <a href="https://count.getloli.com/"><img src="https://count.getloli.com/@Raiden?name=Ani-shedule&theme=random&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=auto"/></a><br/>
+</p>
+
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FKamanati%2FAni-shedule&count_bg=%23FFBB00&title_bg=%23B12222&icon=cliqz.svg&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+
+
+
 ## License
 
 This project is licensed under the MIT License.
