@@ -100,7 +100,7 @@ pip install ani-shedule
 
 1. **Clone the Repository:**
    ```sh
-   git clone https://github.com/yourusername/Ani-shedule.git
+   git clone https://github.com/hasanfq6/Ani-shedule.git
    cd Ani-shedule
    ```
 
